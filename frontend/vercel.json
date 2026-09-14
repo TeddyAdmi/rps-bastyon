@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/b_manifest", "destination": "/b_manifest.json" }
+  ]
+}
