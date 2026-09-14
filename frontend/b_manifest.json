@@ -1,6 +1,7 @@
 {
   "id": "rps.app",
   "name": "Камень Ножницы Бумага",
+  "version": "1.0.1",
   "description": "Игра КНБ на PKOIN с 10 комнатами и автоматическим возвратом средств через 24 часа.",
   "author": "PQoPdcQdkqQSqiHxPfsMwnhxW8QAjfTEzs",
   "permissions": [
