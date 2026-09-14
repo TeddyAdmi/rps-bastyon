@@ -1,0 +1,12 @@
+{
+  "id": "pkoin-rock-paper-scissors",
+  "name": "Камень Ножницы Бумага",
+  "version": "1.0.0",
+  "description": "Игра КНБ на PKOIN с 10 комнатами и автоматическим возвратом средств через 24 часа.",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "account",
+    "payments"
+  ]
+}
