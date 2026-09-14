@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>КНБ на PKOIN</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #00aaff; }
+    .status-bar { background: #1e1e1e; padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+    .room-card { background: #1e1e1e; border: 1px solid #333; padding: 15px; border-radius: 8px; text-align: center; }
+    .btn-bet { background: #00aaff; color: #fff; border: none; padding: 10px 20px; font-size: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .btn-bet:hover { background: #0088cc; }
+  </style>
+</head>
+<body>
+
+  <h1>Камень, Ножницы, Бумага (PKOIN)</h1>
+  <div class="status-bar" id="user-info">Подключение к Bastyon SDK...</div>
+
+  <div class="rooms-grid" id="rooms-container"></div>
+
+  <script>
+    const CENTRAL_WALLET = "ВАШ_PKOIN_АДРЕС_КОШЕЛЬКА"; // Адрес для приема ставок
+    const BACKEND_URL = "https://ВАШ-БЭКЕНД.onrender.com"; // URL бэкенда с Render
+
+    const ROOM_RATES = {
+      1: "Бесплатно", 2: "0.2 PKOIN", 3: "0.5 PKOIN", 4: "1.0 PKOIN", 5: "2.0 PKOIN",
+      6: "3.0 PKOIN", 7: "4.0 PKOIN", 8: "5.0 PKOIN", 9: "10.0 PKOIN", 10: "50.0 PKOIN"
+    };
+
+    const NUMERIC_RATES = {
+      1: 0, 2: 0.2, 3: 0.5, 4: 1.0, 5: 2.0, 6: 3.0, 7: 4.0, 8: 5.0, 9: 10.0, 10: 50.0
+    };
+
+    let currentUserAddress = "";
+
+    window.addEventListener('load', async () => {
+      if (window.bastyon) {
+        try {
+          await window.bastyon.init();
+          currentUserAddress = await window.bastyon.get.address();
+          document.getElementById('user-info').innerText = `Ваш кошелек: ${currentUserAddress}`;
+        } catch (e) {
+          console.error("Ошибка SDK:", e);
+          document.getElementById('user-info').innerText = "Ошибка авторизации в SDK";
+        }
+      } else {
+        document.getElementById('user-info').innerText = "Тестовый режим (вне Bastyon SDK)";
+        currentUserAddress = "test_user_address";
+      }
+      renderRooms();
+    });
+
+    function renderRooms() {
+      const container = document.getElementById('rooms-container');
+      container.innerHTML = "";
+
+      for (let i = 1; i <= 10; i++) {
+        const card = document.createElement('div');
+        card.className = 'room-card';
+        card.innerHTML = `
+          <h3>Комната №${i}</h3>
+          <p>Ставка: <strong>${ROOM_RATES[i]}</strong></p>
+          <button class="btn-bet" onclick="makeBet(${i})">Сделать ставку</button>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    async function makeBet(roomId) {
+      if (!currentUserAddress) {
+        alert("Кошелек не определен!");
+        return;
+      }
+
+      const move = prompt("Выберите ход:\n1 — Камень\n2 — Ножницы\n3 — Бумага");
+      if (!["1", "2", "3"].includes(move)) {
+        alert("Отмена или неверный выбор.");
+        return;
+      }
+
+      const secret = Math.random().toString(36).substring(7);
+      const encoder = new TextEncoder();
+      const data = encoder.encode(move + secret);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const moveHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      const rate = NUMERIC_RATES[roomId];
+      let txId = null;
+
+      if (rate > 0) {
+        if (!window.bastyon) {
+          alert("Оплата возможна только внутри платформы Bastyon.");
+          return;
+        }
+
+        try {
+          const paymentResult = await window.bastyon.payments.send({
+            address: CENTRAL_WALLET,
+            amount: rate,
+            message: `КНБ Ставка в Комнате №${roomId}`
+          });
+          txId = paymentResult.txid;
+        } catch (err) {
+          alert("Транзакция отменена или произошла ошибка.");
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/games/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId,
+            playerAddress: currentUserAddress,
+            moveHash,
+            txId
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert(`Ставка принята! Секретный код хода: ${secret}\nСопернику дается 24 часа. Если никто не зайдет — монеты вернутся.`);
+        }
+      } catch (err) {
+        console.error("Ошибка сервера:", err);
+        alert("Ошибка сервера при создании игры.");
+      }
+    }
+  </script>
+</body>
+</html>
