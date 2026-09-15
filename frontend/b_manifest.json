@@ -1,9 +1,10 @@
 {
   "id": "rps.app",
   "name": "Камень Ножницы Бумага",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Игра КНБ на PKOIN",
   "author": "PQoPdcQdkqQSqiHxPfsMwnhxW8QAjfTEzs",
+  "icon": "b_icon.png",
   "permissions": [
     "account",
     "payment"
