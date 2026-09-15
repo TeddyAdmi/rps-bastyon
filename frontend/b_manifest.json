@@ -2,11 +2,7 @@
   "id": "pocket2.rps.app",
   "name": "Камень Ножницы Бумага",
   "version": "1.0.5",
-  "description": "Игра КНБ на PKOIN",
   "author": "PQoPdcQdkqQSqiHxPfsMwnhxW8QAjfTEzs",
-  "icon": "b_icon.png",
-  "permissions": [
-    "account",
-    "payment"
-  ]
+  "description": "КНБ Игра",
+  "icon": "b_icon.png"
 }
